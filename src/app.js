@@ -50,20 +50,20 @@ app.get('/api/classify-number', async (req, res) => {
     //     return res.status(400).json({ number: number || 'undefined', error: true });
     // }
 
-    // Strict integer validation using regex
+    // Ensure input is a valid integer
     if (!number || !/^-?\d+$/.test(number)) {
         return res.status(400).json({ 
-            number: number || 'invalid', 
+            number: "alphabet", // Always return "alphabet" for invalid input
             error: true 
         });
     }
 
     const num = parseInt(number, 10);
 
-    // Handle extremely large numbers
-    if (!Number.isSafeInteger(parseInt(number, 10))) {
+    // Ensure the number is a safe integer
+    if (!Number.isSafeInteger(num)) {
         return res.status(400).json({
-            number,
+            number: "alphabet",
             error: true
         });
     }
