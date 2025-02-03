@@ -28,7 +28,7 @@ npm start    # Production
 GET /api/classify-number?number=<integer>
 ```
 
-- Example Request
+- Example Local Request
 ```bash
 curl http://localhost:3000/api/classify-number?number=371
 ```
@@ -46,7 +46,7 @@ curl http://localhost:3000/api/classify-number?number=371
 ```
 
 ## Deployment
-Deployed on [Render] at [your-deployment-link]
+Deployed on Render at [[number-classification-api](https://number-classification-api-zpf0.onrender.com)]
 
 ## Dependencies
 - Express.js
@@ -57,7 +57,7 @@ Deployed on [Render] at [your-deployment-link]
 Use Postman or curl to test:
 ```bash
 # Valid request
-curl https://your-api-url/api/classify-number?number=28
+curl https://number-classification-api-zpf0.onrender.com/api/classify-number?number=28
 
 # Invalid request
-curl https://your-api-url/api/classify-number?number=abc
+curl https://number-classification-api-zpf0.onrender.com/api/classify-number?number=abc
