@@ -30,6 +30,7 @@ const isPerfect = (n) => {
 };
 
 const isArmstrong = (n) => {
+    if (n < 0) return false; // Explicitly reject negatives
     const str = Math.abs(n).toString();
     const length = str.length;
     return str.split('').reduce((acc, digit) => 
@@ -45,11 +46,27 @@ const digitSum = (n) => {
 app.get('/api/classify-number', async (req, res) => {
     const { number } = req.query;
     
-    if (!number || isNaN(number)) {
-        return res.status(400).json({ number: number || 'undefined', error: true });
+    // if (!number || isNaN(number)) {
+    //     return res.status(400).json({ number: number || 'undefined', error: true });
+    // }
+
+    // Strict integer validation using regex
+    if (!number || !/^-?\d+$/.test(number)) {
+        return res.status(400).json({ 
+            number: number || 'invalid', 
+            error: true 
+        });
     }
 
     const num = parseInt(number, 10);
+
+    // Handle extremely large numbers
+    if (!Number.isSafeInteger(parseInt(number, 10))) {
+        return res.status(400).json({
+            number,
+            error: true
+        });
+    }
     
     try {
         const [factResponse] = await Promise.all([
@@ -68,10 +85,12 @@ app.get('/api/classify-number', async (req, res) => {
             fun_fact: factResponse.data
         };
 
-        res.json(responseData);
+        return res.status(200).json(responseData);
     } catch (error) {
+        console.error(`API Error: ${error.message}`);
+
         const fallbackFact = `No fun fact available for ${num}`;
-        res.json({
+        return res.status(200).json({
             number: num,
             is_prime: isPrime(num),
             is_perfect: isPerfect(num),
@@ -80,7 +99,9 @@ app.get('/api/classify-number', async (req, res) => {
                 num % 2 === 0 ? 'even' : 'odd'
             ],
             digit_sum: digitSum(num),
-            fun_fact: error.code === 'ECONNABORTED' ? 'Fact request timed out' : fallbackFact
+            fun_fact: error.code === 'ECONNABORTED' 
+                ? 'Fact request timed out' 
+                : fallback
         });
     }
 });
