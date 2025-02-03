@@ -5,7 +5,7 @@ const axios = require('axios');
 const app = express();
 app.use(cors());
 
-// Helper functions
+// Improved helper functions
 const isPrime = (n) => {
     if (n <= 1) return false;
     if (n === 2) return true;
@@ -19,7 +19,8 @@ const isPrime = (n) => {
 const isPerfect = (n) => {
     if (n <= 1) return false;
     let sum = 1;
-    for (let i = 2; i <= Math.sqrt(n); i++) {
+    const sqrt = Math.sqrt(n);
+    for (let i = 2; i <= sqrt; i++) {
         if (n % i === 0) {
             sum += i;
             const complement = n / i;
@@ -30,11 +31,11 @@ const isPerfect = (n) => {
 };
 
 const isArmstrong = (n) => {
-    if (n < 0) return false; // Explicitly reject negatives
-    const str = Math.abs(n).toString();
+    const absolute = Math.abs(n);
+    const str = absolute.toString();
     const length = str.length;
     return str.split('').reduce((acc, digit) => 
-        acc + Math.pow(parseInt(digit, 10), length), 0) === Math.abs(n);
+        acc + Math.pow(parseInt(digit, 10), length), 0) === absolute;
 };
 
 const digitSum = (n) => {
@@ -42,32 +43,26 @@ const digitSum = (n) => {
         acc + parseInt(digit, 10), 0);
 };
 
-// API Endpoint
+// Enhanced API endpoint
 app.get('/api/classify-number', async (req, res) => {
     const { number } = req.query;
     
-    // Validation 1: Check if parameter exists and is valid integer
+    // Strict validation for integers (positive/negative/zero)
     if (typeof number === 'undefined' || !/^-?\d+$/.test(number)) {
         return res.status(400).json({
-            number: number || "undefined",  // Preserve original invalid input
+            number: number || "undefined",
             error: true
         });
     }
 
     const num = parseInt(number, 10);
-
-    // Validation 2: Check integer safety
-    if (!Number.isSafeInteger(num)) {
-        return res.status(400).json({
-            number: number,  // Return original input string
-            error: true
-        });
-    }
     
     try {
-        const [factResponse] = await Promise.all([
-            axios.get(`http://numbersapi.com/${num}/math`, { timeout: 500 }),
-        ]);
+        // Fetch fun fact with proper error handling
+        const factResponse = await axios.get(
+            `http://numbersapi.com/${num}/math?json`,
+            { timeout: 500 }
+        );
 
         return res.status(200).json({
             number: num,
@@ -78,12 +73,11 @@ app.get('/api/classify-number', async (req, res) => {
                 num % 2 === 0 ? 'even' : 'odd'
             ],
             digit_sum: digitSum(num),
-            fun_fact: factResponse.data
+            fun_fact: factResponse.data.text || `No fun fact available for ${num}`
         });
         
     } catch (error) {
-        console.error(`API Error: ${error.message}`);
-
+        // Handle API errors while still returning classification
         return res.status(200).json({
             number: num,
             is_prime: isPrime(num),
@@ -93,9 +87,9 @@ app.get('/api/classify-number', async (req, res) => {
                 num % 2 === 0 ? 'even' : 'odd'
             ],
             digit_sum: digitSum(num),
-            fun_fact: error.code === 'ECONNABORTED' 
-                ? 'Fact request timed out' 
-                : `No fun fact available for ${num}`
+            fun_fact: error.response?.status === 404 
+                ? `No fun fact available for ${num}`
+                : "Could not retrieve fun fact"
         });
     }
 });
