@@ -46,24 +46,20 @@ const digitSum = (n) => {
 app.get('/api/classify-number', async (req, res) => {
     const { number } = req.query;
     
-    // if (!number || isNaN(number)) {
-    //     return res.status(400).json({ number: number || 'undefined', error: true });
-    // }
-
-    // Ensure input is a valid integer
-    if (!number || !/^-?\d+$/.test(number)) {
-        return res.status(400).json({ 
-            number: "alphabet", // Always return "alphabet" for invalid input
-            error: true 
+    // Validation 1: Check if parameter exists and is valid integer
+    if (typeof number === 'undefined' || !/^-?\d+$/.test(number)) {
+        return res.status(400).json({
+            number: number || "undefined",  // Preserve original invalid input
+            error: true
         });
     }
 
     const num = parseInt(number, 10);
 
-    // Ensure the number is a safe integer
+    // Validation 2: Check integer safety
     if (!Number.isSafeInteger(num)) {
         return res.status(400).json({
-            number: "alphabet",
+            number: number,  // Return original input string
             error: true
         });
     }
@@ -73,7 +69,7 @@ app.get('/api/classify-number', async (req, res) => {
             axios.get(`http://numbersapi.com/${num}/math`, { timeout: 500 }),
         ]);
 
-        const responseData = {
+        return res.status(200).json({
             number: num,
             is_prime: isPrime(num),
             is_perfect: isPerfect(num),
@@ -83,13 +79,11 @@ app.get('/api/classify-number', async (req, res) => {
             ],
             digit_sum: digitSum(num),
             fun_fact: factResponse.data
-        };
-
-        return res.status(200).json(responseData);
+        });
+        
     } catch (error) {
         console.error(`API Error: ${error.message}`);
 
-        const fallbackFact = `No fun fact available for ${num}`;
         return res.status(200).json({
             number: num,
             is_prime: isPrime(num),
@@ -101,7 +95,7 @@ app.get('/api/classify-number', async (req, res) => {
             digit_sum: digitSum(num),
             fun_fact: error.code === 'ECONNABORTED' 
                 ? 'Fact request timed out' 
-                : fallback
+                : `No fun fact available for ${num}`
         });
     }
 });
